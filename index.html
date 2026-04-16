@@ -11654,17 +11654,50 @@
             // Bloco de pagamento (só se tiver plano e precisar pagar)
             var devePagar = (status === 'pendente' || status === 'atrasado' || status === 'vencendo' || status === 'inativo') && !semPlano;
             if (devePagar) {
+                var isMercadoPagoPerfil = (data.gateway === 'mercadopago');
                 h += '<div class="pag-card">';
-                h += '<div class="pag-card-title" style="margin-bottom:10px;">💰 Pagar via PIX</div>';
+                h += '<div style="font-size:11px;font-weight:700;color:var(--text-3);letter-spacing:.6px;margin-bottom:10px;">FORMA DE PAGAMENTO</div>';
                 h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">';
                 h += '<div style="font-size:12px;color:var(--text-3);">Valor a pagar:</div>';
                 h += '<div style="font-size:22px;font-weight:900;color:#C9A23A;">' + (plano.valor ? 'R$ ' + parseFloat(plano.valor).toFixed(2) : '—') + '</div>';
                 h += '</div>';
 
                 if (temGateway) {
+                    // Tabs PIX / Cartão (somente Mercado Pago)
+                    if (isMercadoPagoPerfil) {
+                        h += '<div style="display:flex;gap:8px;margin-bottom:14px;">';
+                        h += '<button id="tabBtnPix" onclick="alternarFormaPag(\'pix\')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid rgba(201,162,58,0.6);background:rgba(201,162,58,0.15);color:#C9A23A;">🟢 PIX</button>';
+                        h += '<button id="tabBtnCartao" onclick="alternarFormaPag(\'cartao\')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--text-3);">💳 Cartão</button>';
+                        h += '</div>';
+                    }
+                    // Painel PIX
+                    h += '<div id="painelPix">';
                     h += '<button id="btnGerarPix" onclick="gerarPixDinamico()" style="width:100%;padding:12px;background:linear-gradient(135deg,#C9A23A,#F8E7A1 55%,#8C6A0A);color:#0D0B08;font-weight:800;border:none;border-radius:12px;font-size:13px;cursor:pointer;margin-bottom:8px;">🟢 Gerar QR Code PIX</button>';
                     h += '<div id="pixDinamicoContainer" style="margin-top:4px;"></div>';
                     h += '<div style="font-size:10px;color:var(--text-3);text-align:center;line-height:1.5;margin-top:8px;">' + (gwLabel[data.gateway] || data.gateway) + ' · Confirmado automaticamente</div>';
+                    h += '</div>';
+                    // Painel Cartão (MP only)
+                    if (isMercadoPagoPerfil) {
+                        h += '<div id="painelCartao" style="display:none;">';
+                        h += '<div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:14px;">';
+                        h += '<div style="font-size:11px;font-weight:700;color:var(--text-3);letter-spacing:.5px;margin-bottom:10px;">💳 CADASTRAR CARTÃO — COBRANÇA RECORRENTE</div>';
+                        h += '<div style="font-size:11px;color:var(--text-2);margin-bottom:12px;line-height:1.5;background:rgba(201,162,58,0.06);border-radius:8px;padding:8px 10px;">Ao cadastrar, sua mensalidade será cobrada automaticamente todo mês no cartão.</div>';
+                        h += '<div style="margin-bottom:10px;"><label style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.5px;display:block;margin-bottom:4px;">NÚMERO DO CARTÃO</label>';
+                        h += '<input id="ccNum" type="tel" inputmode="numeric" maxlength="19" placeholder="0000 0000 0000 0000" oninput="formatarCartao(this)" style="width:100%;padding:11px 12px;background:var(--bg-elevated);border:1.5px solid var(--border);border-radius:10px;color:var(--text-1);font-size:15px;font-weight:700;letter-spacing:2px;"></div>';
+                        h += '<div style="margin-bottom:10px;"><label style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.5px;display:block;margin-bottom:4px;">NOME (como no cartão)</label>';
+                        h += '<input id="ccNome" type="text" placeholder="NOME SOBRENOME" style="width:100%;padding:11px 12px;background:var(--bg-elevated);border:1.5px solid var(--border);border-radius:10px;color:var(--text-1);font-size:13px;" oninput="this.value=this.value.toUpperCase()"></div>';
+                        h += '<div style="display:flex;gap:8px;margin-bottom:10px;">';
+                        h += '<div style="flex:1;"><label style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.5px;display:block;margin-bottom:4px;">VALIDADE</label>';
+                        h += '<input id="ccValid" type="tel" inputmode="numeric" maxlength="5" placeholder="MM/AA" oninput="formatarValidade(this)" style="width:100%;padding:11px 12px;background:var(--bg-elevated);border:1.5px solid var(--border);border-radius:10px;color:var(--text-1);font-size:13px;font-weight:700;"></div>';
+                        h += '<div style="flex:1;"><label style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.5px;display:block;margin-bottom:4px;">CVV</label>';
+                        h += '<input id="ccCvv" type="tel" inputmode="numeric" maxlength="4" placeholder="000" style="width:100%;padding:11px 12px;background:var(--bg-elevated);border:1.5px solid var(--border);border-radius:10px;color:var(--text-1);font-size:13px;font-weight:700;"></div>';
+                        h += '</div>';
+                        h += '<div style="margin-bottom:14px;"><label style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.5px;display:block;margin-bottom:4px;">CPF DO TITULAR</label>';
+                        h += '<input id="ccCpf" type="tel" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" oninput="formatarCpf(this)" style="width:100%;padding:11px 12px;background:var(--bg-elevated);border:1.5px solid var(--border);border-radius:10px;color:var(--text-1);font-size:13px;"></div>';
+                        h += '<button id="btnSalvarCartao" onclick="salvarCartaoMP()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a56db,#3b82f6);color:#fff;font-weight:800;border:none;border-radius:12px;font-size:14px;cursor:pointer;margin-bottom:6px;">💳 Ativar Cobrança Recorrente</button>';
+                        h += '<div id="cartaoMsg" style="font-size:11px;text-align:center;min-height:16px;margin-top:4px;"></div>';
+                        h += '</div></div>';
+                    }
                 } else if (data.chavePix) {
                     h += '<div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.5px;margin-bottom:6px;">CHAVE PIX</div>';
                     h += '<div id="pixChaveEl" data-chave="' + escapeHtml(data.chavePix||'') + '" onclick="copiarChavePixEl(this,\'pixCopiadoMsg\')" style="background:var(--bg-elevated);border:1.5px dashed rgba(201,162,58,0.55);border-radius:12px;padding:14px 16px;font-size:14px;font-weight:800;color:#C9A23A;cursor:pointer;word-break:break-all;text-align:center;margin-bottom:6px;">' + escapeHtml(data.chavePix||'—') + '</div>';
@@ -11727,6 +11760,74 @@
             } catch(e) {
                 if (btn) { btn.disabled = false; btn.textContent = '🟢 Gerar QR Code PIX'; }
                 alert('Erro de conexão.');
+            }
+        }
+
+        // ── Alterna PIX / Cartão no painel de perfil ─────────────
+        function alternarFormaPag(tipo) {
+            var pp = document.getElementById('painelPix');
+            var pc = document.getElementById('painelCartao');
+            var bp = document.getElementById('tabBtnPix');
+            var bc = document.getElementById('tabBtnCartao');
+            if (tipo === 'pix') {
+                if (pp) pp.style.display = '';
+                if (pc) pc.style.display = 'none';
+                if (bp) { bp.style.background = 'rgba(201,162,58,0.15)'; bp.style.borderColor = 'rgba(201,162,58,0.6)'; bp.style.color = '#C9A23A'; }
+                if (bc) { bc.style.background = 'transparent'; bc.style.borderColor = 'var(--border)'; bc.style.color = 'var(--text-3)'; }
+            } else {
+                if (pp) pp.style.display = 'none';
+                if (pc) pc.style.display = '';
+                if (bc) { bc.style.background = 'rgba(59,130,246,0.15)'; bc.style.borderColor = 'rgba(59,130,246,0.6)'; bc.style.color = '#60a5fa'; }
+                if (bp) { bp.style.background = 'transparent'; bp.style.borderColor = 'var(--border)'; bp.style.color = 'var(--text-3)'; }
+            }
+        }
+        function formatarCartao(input) {
+            var v = input.value.replace(/\D/g,'').slice(0,16);
+            input.value = v.replace(/(.{4})/g,'$1 ').trim();
+        }
+        function formatarValidade(input) {
+            var v = input.value.replace(/\D/g,'').slice(0,4);
+            if (v.length > 2) v = v.slice(0,2) + '/' + v.slice(2);
+            input.value = v;
+        }
+        function formatarCpf(input) {
+            var v = input.value.replace(/\D/g,'').slice(0,11);
+            v = v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+            input.value = v;
+        }
+        async function salvarCartaoMP() {
+            var btn = document.getElementById('btnSalvarCartao');
+            var msg = document.getElementById('cartaoMsg');
+            var numRaw   = (document.getElementById('ccNum')   ? document.getElementById('ccNum').value   : '').replace(/\s/g,'');
+            var nome     = (document.getElementById('ccNome')  ? document.getElementById('ccNome').value  : '').trim().toUpperCase();
+            var validade = (document.getElementById('ccValid') ? document.getElementById('ccValid').value : '').trim();
+            var cvv      = (document.getElementById('ccCvv')   ? document.getElementById('ccCvv').value   : '').trim();
+            var cpf      = (document.getElementById('ccCpf')   ? document.getElementById('ccCpf').value   : '').replace(/\D/g,'');
+            if (!numRaw || numRaw.length < 13) { if(msg){msg.style.color='#f87171';msg.textContent='❌ Número do cartão inválido.';}return; }
+            if (!nome)                          { if(msg){msg.style.color='#f87171';msg.textContent='❌ Informe o nome do titular.';}return; }
+            var parts = validade.split('/');
+            if (parts.length !== 2 || parts[0].length !== 2 || parts[1].length !== 2) { if(msg){msg.style.color='#f87171';msg.textContent='❌ Validade inválida (MM/AA).';}return; }
+            if (!cvv || cvv.length < 3)         { if(msg){msg.style.color='#f87171';msg.textContent='❌ CVV inválido.';}return; }
+            if (!cpf || cpf.length !== 11)      { if(msg){msg.style.color='#f87171';msg.textContent='❌ CPF inválido (11 dígitos).';}return; }
+            var expiryMonth = parts[0]; var expiryYear = '20' + parts[1];
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ Processando...'; }
+            if (msg) msg.textContent = '';
+            try {
+                var result = await secureFetch('salvarCartaoMP', {
+                    email: currentUser.email, cardNumber: numRaw, cardHolder: nome,
+                    expiryMonth: expiryMonth, expiryYear: expiryYear, cvv: cvv, cpf: cpf
+                });
+                if (result.success) {
+                    if (msg) { msg.style.color='#4ade80'; msg.textContent='✅ ' + (result.message || 'Cartão cadastrado! Cobrança recorrente ativada.'); }
+                    if (btn) btn.textContent = '✅ Ativado';
+                    setTimeout(function(){ loadPagamentos(); if(document.getElementById('pagTabContainer')) loadPagamentosTab(); }, 2000);
+                } else {
+                    if (msg) { msg.style.color='#f87171'; msg.textContent='❌ ' + (result.message || 'Erro ao cadastrar cartão.'); }
+                    if (btn) { btn.disabled = false; btn.textContent = '💳 Ativar Cobrança Recorrente'; }
+                }
+            } catch(e) {
+                if (msg) { msg.style.color='#f87171'; msg.textContent='❌ Erro de conexão.'; }
+                if (btn) { btn.disabled = false; btn.textContent = '💳 Ativar Cobrança Recorrente'; }
             }
         }
 
